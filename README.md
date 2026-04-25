@@ -75,7 +75,7 @@ securevault-api/
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/YOURUSERNAME/securevault-api
+git clone https://github.com/Pa1n3/securevault-api
 cd securevault-api
 ```
 
