@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.limiter import limiter 
 from fastapi import Request
-from app.schemas import UserRegister, UserLogin, UserResponse, TokenResponse, ForgotPassword
+from app.schemas import UserRegister, UserLogin, UserResponse, TokenResponse, ForgotPassword,ResetPassword
 from app.database import execute_query
 import secrets
 import hashlib
@@ -91,9 +91,8 @@ def get_me(current_user: dict = Depends(get_current_user)):
     }
 
 @router.post("/forgot-password")
-@router.post("/forgot-password")
-@router.post("/forgot-password")
-def create_token(data: ForgotPassword):
+@limiter.limit("3/minute")
+def create_token(request: Request, data: ForgotPassword):
     user = execute_query(
         "SELECT id FROM users WHERE email = %s",
         (data.email,),
@@ -101,7 +100,7 @@ def create_token(data: ForgotPassword):
     )
 
     if not user:
-        raise HTTPException(status_code=401, detail="Email Not Found")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = secrets.token_urlsafe(32)
 
@@ -110,10 +109,52 @@ def create_token(data: ForgotPassword):
         VALUES (%s, %s, NOW() + INTERVAL '10 minutes')
     """, (user[0], token))
 
-    return {"token": token}
-     
-    
+    print(f"DEV ONLY - Reset token: {token}")
+    return {"message": "If this email exists, a reset link has been sent"}
+# FUNCTION:  receives token, new password, confirm password
+# WIRING:    @router.post("/reset-password"), auth with token
+# SECURITY:  token must be valid
+#            token must be unique and expire
+#            changes user password by new password  
+#            passwords must match (new_password == confirm_password)      
+@router.post("/reset-password")
+def reset_password(data: ResetPassword):
 
+    # Step 1 — check passwords match first (no DB needed)
+    if data.new_password != data.confirm_password:
+        raise HTTPException(400, "Passwords do not match")
+
+    # Step 2 — find token in password_resets table
+    record = execute_query(
+        """SELECT id, user_id, used, expires_at 
+           FROM password_resets 
+           WHERE token = %s 
+           AND used = false 
+           AND expires_at > NOW()""",
+        (data.token,),
+        fetch='one'
+    )
+
+    if not record:
+        raise HTTPException(400, "Invalid or expired token")
+
+    # Step 3 — hash new password
+    hashed = hash_password(data.new_password)
+
+    # Step 4 — update user password
+    execute_query(
+        "UPDATE users SET password = %s WHERE id = %s",
+        (hashed, record[1])   
+    )
+
+    # Step 5 — mark token as used
+    execute_query(
+        "UPDATE password_resets SET used = %s WHERE id = %s",
+        (True, record[0])
+                
+    )
+
+    return {"message": "Password reset successful"}
 @router.get("/all")
 def get_all_users(admin: dict = Depends(require_admin)):
     """Admin only — see all users"""
@@ -123,3 +164,4 @@ def get_all_users(admin: dict = Depends(require_admin)):
     )
     return [{"id": u[0], "username": u[1], "email": u[2], 
              "role": u[3], "created_at": str(u[4])} for u in users]
+

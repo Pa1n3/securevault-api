@@ -35,16 +35,7 @@ def get_my_notes(current_user: dict = Depends(get_current_user)):
 
 @router.get("/{note_id}")
 def get_note(note_id: int, current_user: dict = Depends(get_current_user)):
-    """
-    Get a single note.
-    
-    ⚠️  IDOR VULNERABILITY LIVES HERE — intentionally.
-    Notice: we're fetching by note_id WITHOUT checking user_id.
-    Any logged-in user can read any note by changing the ID.
-    
-    This is what you'll learn to find on real targets.
-    After building: try accessing note_id=1 with a different user account.
-    """
+
     note = execute_query(
         "SELECT id, user_id, title, content, is_private FROM notes WHERE id = %s AND user_id = %s",
         (note_id,current_user["id"]),  # ← missing "AND user_id = %s" — intentional bug

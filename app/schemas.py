@@ -19,8 +19,11 @@ class UserLogin(BaseModel):
     password: str
 
 class ForgotPassword(BaseModel):
-    email : str
-
+    email : EmailStr
+class ResetPassword(BaseModel):  
+    token: str
+    new_password : str
+    confirm_password: str
 class UserResponse(BaseModel):
     id: int
     username: str
