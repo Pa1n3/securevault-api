@@ -23,7 +23,6 @@ def create_note(data: NoteCreate, current_user: dict = Depends(get_current_user)
 
 @router.get("/")
 def get_my_notes(current_user: dict = Depends(get_current_user)):
-    """Get only YOUR notes"""
     notes = execute_query(
         "SELECT id, title, content, is_private FROM notes WHERE user_id = %s",
         (current_user["id"],),
@@ -52,7 +51,7 @@ def get_note(note_id: int, current_user: dict = Depends(get_current_user)):
 @router.put("/{note_id}")
 def update_note(note_id: int, data: NoteUpdate, 
                 current_user: dict = Depends(get_current_user)):
-    # This one IS secure — checks ownership
+    
     note = execute_query(
         "SELECT id FROM notes WHERE id = %s AND user_id = %s",
         (note_id, current_user["id"]),
@@ -87,7 +86,6 @@ def delete_note(note_id: int, current_user: dict = Depends(get_current_user)):
 
 @router.get("/admin/all")
 def get_all_notes(admin: dict = Depends(require_admin)):
-    """Admin only — see every note from every user"""
     notes = execute_query(
         "SELECT n.id, u.username, n.title, n.content FROM notes n JOIN users u ON n.user_id = u.id",
         fetch='all'

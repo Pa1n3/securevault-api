@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.errors  import limiter
@@ -25,10 +26,12 @@ app.add_exception_handler(AppError, app_error_handler)
 app.add_exception_handler(404, not_found_handler)
 app.add_exception_handler(500, server_error_handler)
 # Create tables on startup
-@app.on_event("startup")
-def startup():
+@asynccontextmanager
+async def lifespan(app):
     create_tables()
+    yield
 
+app = FastAPI(lifespan=lifespan)
 # Register all routes
 app.include_router(users.router)
 app.include_router(notes.router)

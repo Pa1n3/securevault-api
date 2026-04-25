@@ -29,7 +29,7 @@ async def upload_file(
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File too large (max 5MB)")
     
-    # Generate safe filename (never trust the original filename)
+    # Generate safe filename 
     safe_filename = f"{uuid.uuid4().hex}{ext}"
     filepath = os.path.join(UPLOAD_DIR, safe_filename)
     

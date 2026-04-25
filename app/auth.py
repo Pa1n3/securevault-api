@@ -13,6 +13,8 @@ from app.database import execute_query
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is not set in .env file. Server cannot start.")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")  # fallback to HS256 if .env fails
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
@@ -32,6 +34,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         plain_password.encode('utf-8'),
         hashed_password.encode('utf-8')
     )
+
 
 
 # ─── JWT Functions ────────────────────────────────────────────

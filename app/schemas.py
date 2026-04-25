@@ -18,12 +18,6 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
-class ForgotPassword(BaseModel):
-    email : EmailStr
-class ResetPassword(BaseModel):  
-    token: str
-    new_password : str
-    confirm_password: str
 class UserResponse(BaseModel):
     id: int
     username: str
@@ -56,4 +50,12 @@ class NoteResponse(BaseModel):
     user_id: int
     title: str
     content: str
-    is_private: bool
+    is_private: bool    
+# ─── Password Schemas ─────────────────────────────────────────────
+
+class ForgotPassword(BaseModel):
+    email : EmailStr
+class ResetPassword(BaseModel):  
+    token: str
+    new_password : str = Field(min_length=8,)
+    confirm_password: str

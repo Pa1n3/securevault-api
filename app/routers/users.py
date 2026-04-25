@@ -4,7 +4,7 @@ from fastapi import Request
 from app.schemas import UserRegister, UserLogin, UserResponse, TokenResponse, ForgotPassword,ResetPassword
 from app.database import execute_query
 import secrets
-import hashlib
+
 from app.auth import (
     hash_password, verify_password,
     create_access_token, generate_api_key,
@@ -27,7 +27,7 @@ def register(data: UserRegister):
     if existing:
         raise HTTPException(status_code=400, detail="Username or email already taken")
     
-    # Hash the password — NEVER store plaintext
+    # Hash the password
     hashed = hash_password(data.password)
     api_key = generate_api_key()
     
@@ -111,12 +111,7 @@ def create_token(request: Request, data: ForgotPassword):
 
     print(f"DEV ONLY - Reset token: {token}")
     return {"message": "If this email exists, a reset link has been sent"}
-# FUNCTION:  receives token, new password, confirm password
-# WIRING:    @router.post("/reset-password"), auth with token
-# SECURITY:  token must be valid
-#            token must be unique and expire
-#            changes user password by new password  
-#            passwords must match (new_password == confirm_password)      
+    
 @router.post("/reset-password")
 def reset_password(data: ResetPassword):
 
